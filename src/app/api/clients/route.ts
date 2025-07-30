@@ -9,9 +9,13 @@ const dbName = 'Stripe';
 
 export async function GET(req: Request) {
   try {
-    const { searchParams } = new URL(req.url);
-    const email = searchParams.get('email') || '';
-    const status = searchParams.get('status') || '';
+      if (!req.url) {
+          return NextResponse.json([], { status: 200 });
+      }
+
+      const { searchParams } = new URL(req.url);
+      const email = searchParams.get('email') || '';
+      const status = searchParams.get('status') || '';
 
     await client.connect();
     const db = client.db(dbName);
