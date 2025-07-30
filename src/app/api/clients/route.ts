@@ -1,13 +1,13 @@
 
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server'; 
 import { MongoClient } from 'mongodb';
 
 const uri = process.env.MONGODB_URI!;
 const client = new MongoClient(uri);
 const dbName = 'Stripe';
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
       if (!req.url) {
           return NextResponse.json([], { status: 200 });
