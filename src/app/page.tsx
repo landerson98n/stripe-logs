@@ -1,103 +1,129 @@
-import Image from "next/image";
+'use client';
+
+import { useEffect, useState } from 'react';
+import { jsPDF } from 'jspdf';
+import "./globals.css"; // ou '@/app/globals.css'
+
+interface Client {
+  _id: string;
+  user_id: string;
+  email_sent: string;
+  status: string;
+  status_email: string;
+  memberkit_status: string;
+  sent_telegram: boolean;
+  date_email: string;
+}
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [filters, setFilters] = useState({ email: '', status: '' });
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  useEffect(() => {
+    setLoading(true);
+    fetch(`/api/clients?email=${filters.email}&status=${filters.status}`)
+      .then(res => res.json())
+      .then(data => {
+        setClients(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError('Erro ao carregar dados');
+        setLoading(false);
+      });
+  }, [filters]);
+
+const exportPDF = (client: Client) => {
+  const doc = new jsPDF();
+  let y = 10;
+
+  const addLine = (label: string, value: any) => {
+    doc.text(`${label}: ${typeof value === 'object' ? JSON.stringify(value) : String(value)}`, 10, y);
+    y += 10;
+  };
+
+  addLine('User ID', client.user_id);
+  addLine('Sent Telegram', client.sent_telegram);
+  addLine('Course ID', (client as any).course_id);
+  addLine('Memberkit ID', (client as any).memberkit_id);
+  addLine('Memberkit Status', client.memberkit_status);
+  addLine('Clicked', JSON.stringify((client as any).clicked));
+  addLine('Email Delivered', (client as any).email_delivered);
+  addLine('Email Sent', client.email_sent);
+  addLine('ID', (client as any).id);
+  addLine('Status', client.status);
+  addLine('Date Email', client.date_email);
+  addLine('IP', (client as any).ip);
+  addLine('Status Email', client.status_email);
+  addLine('User Agent Email', (client as any).user_agent_email);
+
+  doc.save(`cliente-${client.user_id}.pdf`);
+};
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-8 sm:p-16 text-black">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8 text-center">Painel de Clientes</h1>
+
+        <div className="bg-white shadow rounded-lg p-6 mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <input
+            type="text"
+            placeholder="Filtrar por email"
+            value={filters.email}
+            onChange={(e) => setFilters(f => ({ ...f, email: e.target.value }))}
+            className="border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <select
+            value={filters.status}
+            onChange={(e) => setFilters(f => ({ ...f, status: e.target.value }))}
+            className="border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <option value="">Todos os status</option>
+            <option value="complete">Complete</option>
+            <option value="pending">Pending</option>
+          </select>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {loading ? (
+          <div className="text-center text-gray-600">Carregando dados...</div>
+        ) : error ? (
+          <div className="text-center text-red-600">{error}</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white shadow rounded-lg overflow-hidden">
+              <thead className="bg-blue-600 text-white">
+                <tr>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">Email</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">Status</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">Status Email</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">Data</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {clients.map((client) => (
+                  <tr key={client._id} className="border-b hover:bg-gray-100 transition">
+                    <td className="px-6 py-4">{client.email_sent}</td>
+                    <td className="px-6 py-4">{client.status}</td>
+                    <td className="px-6 py-4">{client.status_email}</td>
+                    <td className="px-6 py-4">{client.date_email}</td>
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => exportPDF(client)}
+                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+                      >
+                        Exportar PDF
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
