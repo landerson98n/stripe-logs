@@ -9,17 +9,12 @@ const dbName = 'Stripe';
 
 export async function GET(req: NextRequest) {
   try {
-      if (!req.url) {
-          return NextResponse.json([], { status: 200 });
-      }
-
-      const { searchParams } = new URL(req.url);
-      const email = searchParams.get('email') || '';
-      const status = searchParams.get('status') || '';
+    const email = req.nextUrl.searchParams.get('email') || '';
+    const status = req.nextUrl.searchParams.get('status') || '';
 
     await client.connect();
     const db = client.db(dbName);
-    const collection = db.collection('Logs'); // substitua pelo nome real
+    const collection = db.collection('Logs');
 
     const filter: any = {};
     if (email) filter.email_sent = { $regex: email, $options: 'i' };
